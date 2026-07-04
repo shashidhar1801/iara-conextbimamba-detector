@@ -1,0 +1,73 @@
+project:
+  name: iara_underwater_conextbimamba
+  output_dir: runs/iara_conextbimamba_binary
+  seed: 42
+
+data:
+  # Create this file with: python scripts/prepare_iara.py ... then python scripts/make_splits.py ...
+  manifest_csv: data/iara_manifest_splits.csv
+  split_column: split
+  path_column: audio_path
+  target_column: target
+  recording_id_column: recording_id
+
+  sample_rate: 16000
+  segment_seconds: 10.0
+  hop_seconds: 5.0
+  min_segment_seconds: 2.0
+
+  # IARA baseline used spectral windows around 1024 samples after 16 kHz resampling.
+  n_fft: 1024
+  hop_length: 512
+  win_length: 1024
+  n_mels: 128
+  f_min: 10.0
+  f_max: 8000.0
+
+  batch_size: 16
+  num_workers: 4
+  pin_memory: true
+
+augmentation:
+  enabled: true
+  random_gain_db: 6.0
+  gaussian_noise_snr_db_min: 5.0
+  gaussian_noise_snr_db_max: 30.0
+  noise_probability: 0.35
+  time_mask_probability: 0.25
+  time_mask_fraction: 0.12
+  freq_mask_probability: 0.25
+  freq_mask_bins: 12
+
+model:
+  n_mels: 128
+  d_model: 192
+  num_layers: 6
+  d_ff: 768
+  conv_kernel_size: 31
+  dropout: 0.1
+  pooling: attentive_stats
+
+  # ExtBiMamba defaults follow the speech paper's successful settings: d_state=16, d_conv=4, expand=2.
+  mamba:
+    backend: auto        # auto | mamba_ssm | torch
+    d_state: 16
+    d_conv: 4
+    expand: 2
+    dt_rank: auto
+
+  num_binary_outputs: 1
+  num_size_classes: 0   # set to 4 for optional background/small/medium/large head if your manifest has size_label
+
+training:
+  epochs: 60
+  learning_rate: 0.0003
+  weight_decay: 0.000001
+  grad_clip: 1.0
+  amp: true
+  pos_weight: auto
+  threshold: 0.5
+  early_stop_patience: 12
+  monitor: val_balanced_accuracy
+  monitor_mode: max
+  size_loss_weight: 0.25

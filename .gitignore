@@ -1,0 +1,16 @@
+.DS_Store
+.venv/
+__pycache__/
+*.pyc
+
+# Public GitHub release: keep source, configs, manifests, docs, selected
+# checkpoints/results, and curated example WAVs. Do not commit the full IARA
+# dataset or local Streamlit upload cache.
+data/iara_raw/
+data/iara_full/
+data/iara_subset/
+runs/gui_uploads/
+runs/**/last.pt
+
+# Keep optional large external model artifacts out unless intentionally added.
+*.pth

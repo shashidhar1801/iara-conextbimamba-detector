@@ -1,0 +1,84 @@
+project:
+  name: iara_conextbimamba_full_large_multires_20s
+  output_dir: runs/iara_conextbimamba_full_large_multires_20s
+  seed: 20260626
+
+data:
+  manifest_csv: data/iara_full_manifests/iara_full_1825_splits.csv
+  split_column: split
+  path_column: audio_path
+  target_column: target
+  recording_id_column: recording_id
+
+  sample_rate: 16000
+  segment_seconds: 20.0
+  hop_seconds: 20.0
+  min_segment_seconds: 4.0
+
+  feature_mode: multi_resolution_logmel_cqt
+  n_fft: 2048
+  hop_length: 512
+  win_length: 2048
+  n_mels: 128
+  f_min: 10.0
+  f_max: 8000.0
+  multi_resolution:
+    mel_resolutions:
+      - n_fft: 1024
+        hop_length: 256
+        win_length: 1024
+        n_mels: 64
+        f_min: 10.0
+        f_max: 8000.0
+    cqt:
+      enabled: true
+      n_fft: 4096
+      hop_length: 512
+      win_length: 4096
+      n_bins: 84
+      f_min: 20.0
+      f_max: 8000.0
+
+  batch_size: 8
+  num_workers: 2
+  pin_memory: false
+
+augmentation:
+  enabled: true
+  random_gain_db: 3.0
+  gaussian_noise_snr_db_min: 12.0
+  gaussian_noise_snr_db_max: 30.0
+  noise_probability: 0.15
+  time_mask_probability: 0.10
+  time_mask_fraction: 0.06
+  freq_mask_probability: 0.10
+  freq_mask_bins: 8
+
+model:
+  n_mels: 276
+  d_model: 128
+  num_layers: 4
+  d_ff: 512
+  conv_kernel_size: 31
+  dropout: 0.15
+  pooling: attentive_stats
+  mamba:
+    backend: torch
+    d_state: 32
+    d_conv: 5
+    expand: 2
+  num_binary_outputs: 1
+  num_size_classes: 0
+
+training:
+  epochs: 12
+  learning_rate: 0.00015
+  weight_decay: 0.00001
+  grad_clip: 1.0
+  amp: false
+  pos_weight: auto
+  threshold: 0.5
+  early_stop_patience: 4
+  monitor: val_balanced_accuracy
+  monitor_mode: max
+  size_loss_weight: 0.0

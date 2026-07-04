@@ -1,0 +1,11 @@
+{
+  "groups": [
+    "dc",
+    "platform",
+    "cpa",
+    "range_bin",
+    "size_name",
+    "vessel_type"
+  ],
+  "threshold": 0.5
+}

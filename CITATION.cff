@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+title: "Underwater ConExtBiMamba Detector"
+message: "If you use this software, model, GUI, or benchmark package, please cite the associated manuscript and the IARA dataset."
+type: software
+version: "0.2.0"
+date-released: "2026-06-28"
+license: "MIT"
+authors:
+  - name: "Shashidhar S."
+abstract: "Research Streamlit dashboard and model package for passive underwater acoustic ship/background detection using a multi-resolution Underwater ConExtBiMamba detector trained and evaluated on the IARA benchmark."
+keywords:
+  - passive acoustic monitoring
+  - underwater acoustics
+  - ship detection
+  - IARA
+  - Mamba
+  - Conformer
+  - Streamlit
+preferred-citation:
+  type: article
+  title: "Underwater ConExtBiMamba Detector for Passive Acoustic Ship-Presence Prediction"
+  authors:
+    - name: "Shashidhar S."
+  year: 2026
+  notes: "Manuscript in preparation. Replace this entry with the final DOI and bibliographic details after publication."
+references:
+  - type: dataset
+    title: "IARA: An Acoustical Recordings Archive"
+    notes: "Use the citation and license supplied by the latest IARA Zenodo release."
+  - type: article
+    title: "Mamba in Speech: Towards an Alternative to Self-Attention"
+    authors:
+      - family-names: "Zhang"
+        given-names: "Y."
+    journal: "IEEE/ACM Transactions on Audio, Speech, and Language Processing"
+    year: 2025
+  - type: article
+    title: "IARA benchmark article for passive acoustic ship/background classification"
+    doi: "10.1109/ACCESS.2025.3585467"
+    notes: "IEEE document 11063279."

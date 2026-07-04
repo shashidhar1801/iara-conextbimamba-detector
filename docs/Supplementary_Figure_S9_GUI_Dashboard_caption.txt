@@ -1,0 +1,1 @@
+Supplementary Figure S9. Prototype Streamlit dashboard for passive acoustic ship-presence prediction. The interface supports public Balanced and Conservative ConExtBiMamba modes, waveform and spectrogram review, segment-probability timelines, recording-level decisions, and reproducible CSV/JSON/PNG/ZIP exports.

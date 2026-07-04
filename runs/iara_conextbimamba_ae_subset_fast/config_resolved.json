@@ -1,0 +1,68 @@
+{
+  "augmentation": {
+    "enabled": true,
+    "freq_mask_bins": 6,
+    "freq_mask_probability": 0.15,
+    "gaussian_noise_snr_db_max": 30.0,
+    "gaussian_noise_snr_db_min": 10.0,
+    "noise_probability": 0.2,
+    "random_gain_db": 3.0,
+    "time_mask_fraction": 0.08,
+    "time_mask_probability": 0.15
+  },
+  "data": {
+    "batch_size": 8,
+    "f_max": 8000.0,
+    "f_min": 10.0,
+    "hop_length": 512,
+    "hop_seconds": 10.0,
+    "manifest_csv": "data/iara_subset_manifests/iara_ae_120_subset.csv",
+    "min_segment_seconds": 2.0,
+    "n_fft": 1024,
+    "n_mels": 64,
+    "num_workers": 0,
+    "path_column": "audio_path",
+    "pin_memory": false,
+    "recording_id_column": "recording_id",
+    "sample_rate": 16000,
+    "segment_seconds": 10.0,
+    "split_column": "split",
+    "target_column": "target",
+    "win_length": 1024
+  },
+  "model": {
+    "conv_kernel_size": 15,
+    "d_ff": 256,
+    "d_model": 64,
+    "dropout": 0.1,
+    "mamba": {
+      "backend": "torch",
+      "d_conv": 4,
+      "d_state": 16,
+      "expand": 2
+    },
+    "n_mels": 64,
+    "num_binary_outputs": 1,
+    "num_layers": 2,
+    "num_size_classes": 0,
+    "pooling": "attentive_stats"
+  },
+  "project": {
+    "name": "iara_ae_subset_conextbimamba_fast",
+    "output_dir": "runs/iara_conextbimamba_ae_subset_fast",
+    "seed": 20260626
+  },
+  "training": {
+    "amp": false,
+    "early_stop_patience": 5,
+    "epochs": 5,
+    "grad_clip": 1.0,
+    "learning_rate": 0.0003,
+    "monitor": "val_balanced_accuracy",
+    "monitor_mode": "max",
+    "pos_weight": "auto",
+    "size_loss_weight": 0.0,
+    "threshold": 0.5,
+    "weight_decay": 1e-06
+  }
+}

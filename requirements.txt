@@ -1,0 +1,19 @@
+# Core deep-learning stack
+# Public-release pins tested with the Streamlit GUI smoke test.
+# Install a CUDA-compatible torch/torchaudio build from https://pytorch.org/get-started/locally/ when training on GPU.
+torch==2.12.1
+torchaudio==2.11.0
+numpy==2.5.0
+pandas==3.0.3
+scikit-learn==1.9.0
+PyYAML==6.0.3
+tqdm==4.68.3
+soundfile==0.14.0
+openpyxl==3.1.5
+requests==2.34.2
+matplotlib==3.11.0
+scipy==1.18.0
+streamlit==1.58.0
+
+# Optional but recommended for speed. If installation fails, the code automatically uses a pure-PyTorch fallback.
+# mamba-ssm>=2.2

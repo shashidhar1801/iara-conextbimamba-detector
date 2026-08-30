@@ -104,6 +104,7 @@ def main() -> None:
     )
     copy_file_as("examples/wavs/smoke_test_5s.wav", "examples/wavs/smoke_test_5s.wav")
     copy_file_as("docs/Supplementary_Figure_S9_GUI_Dashboard.png", "assets/gui_preview.png")
+    copy_file_as("media/Mamba_ship_detection.mp4", "assets/Mamba_ship_detection.mp4")
 
     deployed_app = PACKAGE / "app.py"
     app_text = deployed_app.read_text(encoding="utf-8")

@@ -55,6 +55,8 @@ Neither threshold was chosen from Lake Balaton, Taitung, or other external-test 
 
 The GUI exports segment CSV, decision JSON, analysis PNG, batch CSV/JSON, and batch ZIP files. Uploaded audio is cached locally under `runs/gui_uploads`. Delete that folder after use if retained copies are not wanted.
 
+The **About** tab includes the bundled interface walkthrough. It starts muted so modern browser autoplay policies do not block it; use the player controls to enable sound.
+
 The package contains two demonstration recordings only: one 300-second curated example and one 5-second nonbenchmark smoke file. It does not contain the IARA dataset, Lake Balaton data, Taitung data, training caches, or sealed-evaluation predictions.
 
 ## Known limitations

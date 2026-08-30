@@ -52,6 +52,7 @@ Interactive browser checks confirmed:
 - waveform panel and CSV/JSON/PNG download controls;
 - corrected matched-benchmark comparison panel;
 - About panel with model, mode, version, reproducibility, input-contract, and upload-cache information;
+- bundled About walkthrough present, autoplaying muted with controls available;
 - confirmed absence of the removed Citation And License and Known Limitations sections;
 - confirmed absence of the removed benchmark explanatory caption;
 - switching to the conservative frozen operating mode;

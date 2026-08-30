@@ -127,6 +127,16 @@ ADVANCED_MODES: list[str] = []
 AUDIO_TYPES = ["wav", "flac", "aiff", "aif", "ogg", "mp3"]
 
 
+def about_video_path() -> Path | None:
+    """Return the bundled walkthrough location for source and packaged runs."""
+
+    candidates = (
+        PROJECT_ROOT / "assets" / "Mamba_ship_detection.mp4",
+        PROJECT_ROOT / "media" / "Mamba_ship_detection.mp4",
+    )
+    return next((path for path in candidates if path.is_file()), None)
+
+
 def apply_page_style() -> None:
     st.markdown(
         """
@@ -1057,6 +1067,18 @@ def render_about() -> None:
         "Offline research decision-support prototype only. It is not a real-time detector, safety system, vessel census, "
         "or substitute for qualified human review."
     )
+    st.subheader("GUI Walkthrough")
+    walkthrough = about_video_path()
+    if walkthrough is None:
+        st.info("The walkthrough video is not present in this installation.")
+    else:
+        st.video(
+            str(walkthrough),
+            format="video/mp4",
+            autoplay=True,
+            muted=True,
+        )
+        st.caption("The walkthrough starts muted so it can autoplay. Use the player controls to enable sound.")
     st.subheader("Model")
     st.write(
         "The dashboard wraps the frozen seed-20260825 ConExtBiMamba checkpoint from the corrected IARA experiment. "

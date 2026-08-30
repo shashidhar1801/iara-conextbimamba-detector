@@ -33,6 +33,8 @@ console window.
 
 Watch the interface walkthrough:
 [`media/Mamba_ship_detection.mp4`](media/Mamba_ship_detection.mp4).
+The same video is bundled in the Windows package and autoplays muted in the
+GUI's **About** tab. Viewers can enable sound from the player.
 
 The packaged default mode uses arithmetic-mean aggregation with threshold
 `0.2287546408673127`. The secondary conservative mode uses mean-log-survival
@@ -40,6 +42,17 @@ aggregation with threshold `0.6510023052576646`. Both modes use the same frozen
 seed-20260825 checkpoint and the same three fixed 20-second evidence windows.
 See [README_GUI.md](README_GUI.md) for installation, integrity, and input-contract
 details.
+
+### Taitung demonstration audio
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22177090.svg)](https://doi.org/10.5281/zenodo.22177090)
+
+The seven WAV files used for the documented GUI demonstration are archived as
+**Taitung 2022 ConExtBiMamba GUI Demonstration Audio** on Zenodo:
+[doi:10.5281/zenodo.22177090](https://doi.org/10.5281/zenodo.22177090).
+They are a deliberately selected demonstration set, not a representative
+evaluation cohort; do not calculate or report model-performance estimates from
+those seven examples.
 
 ## Architecture
 

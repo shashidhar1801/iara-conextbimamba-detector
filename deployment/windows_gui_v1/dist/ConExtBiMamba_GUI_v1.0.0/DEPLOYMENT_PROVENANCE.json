@@ -1,10 +1,10 @@
 {
   "deployment": "ConExtBiMamba Windows GUI",
   "deployment_version": "1.0.0",
-  "built_utc": "2026-08-30T12:05:01.697808+00:00",
+  "built_utc": "2026-08-30T13:32:05.018988+00:00",
   "source_branch": "deployment/windows-gui-v1",
   "source_commit": "28623c5e05bb5fac98d1a7fdb596baaef3a8a2b2",
-  "app_sha256": "691ba395cccaecfd008184cbd6c356e1f9d1fce16f309520fa875db9f858ea40",
+  "app_sha256": "095a7a68ecb40bac456d43f84c3b5b7dc73382fbb20b343a243037191cab7597",
   "source_checkpoint_relative_path": "revision_training/task3_matched_models/frozen_checkpoints/matched_conextbimamba/seed_20260825/best_checkpoint.pt",
   "checkpoint_relative_path": "models/matched_conextbimamba_seed_20260825.pt",
   "checkpoint_sha256": "4b17c076a4121dfe3233a28214a81b4d0a1ee1b53209e2f668b960a6bc62b00a",

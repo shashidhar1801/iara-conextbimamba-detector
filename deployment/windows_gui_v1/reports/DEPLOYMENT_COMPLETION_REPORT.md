@@ -6,11 +6,12 @@ The ConExtBiMamba Windows GUI 1.0 deployment is complete and verified.
 
 - Folder: `deployment/windows_gui_v1/dist/ConExtBiMamba_GUI_v1.0.0/`
 - ZIP: `deployment/windows_gui_v1/dist/ConExtBiMamba_GUI_v1.0.0_Windows.zip`
-- ZIP size: 29,587,448 bytes.
-- ZIP SHA-256: `5e9492060fa521ed9ed6869a393b8077fecfc9798fb6b881f65a92a0a211d435`.
-- ZIP entries: 32.
-- Controlled files: 30 plus the manifest and manifest sidecar.
-- Manifest SHA-256: `055597409f5b5cb4c7ce56db71b2a9a7642e9f95d770d7aaec37e133ee50ac65`.
+- ZIP size: 67,803,441 bytes.
+- ZIP SHA-256: `cf4c789a38fd46aeec6a8e44a1c846eee4b6583e1ca7de1e7d83cd1a218adaa6`.
+- ZIP entries: 33.
+- Controlled files: 31 plus the manifest and manifest sidecar.
+- Manifest SHA-256: `f26162252f695d3d51a448e5a7d99baf0643a4a128ab42c71c9df37f829cd6d1`.
+- Bundled walkthrough: `assets/Mamba_ship_detection.mp4`, 39,134,701 bytes, SHA-256 `227ec846553a234f581eed36bc600aab67aa05082737c06449e81fc8f64b871f`.
 - ZIP CRC/full-entry read: pass.
 - Duplicate paths: 0.
 - Prohibited paths: 0.
@@ -29,6 +30,7 @@ Double-click `Launch_GUI.vbs` to start the localhost-only dashboard without a co
 - Hidden launch before readiness: `MainWindowHandle = 0`.
 - Hidden launch after HTTP 200 readiness: `MainWindowHandle = 0`.
 - Browser interaction and visual QA: passed.
+- About walkthrough video present, muted autoplay active, controls available, and playback running: passed.
 - Browser console warnings/errors: 0.
 - Requested top-level release banner absent from the rendered front page: passed.
 - First-launch missing-runtime installer-handoff contract: passed.

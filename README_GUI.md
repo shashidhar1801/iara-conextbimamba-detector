@@ -18,6 +18,9 @@ The release also includes a walkthrough video:
 
 [`media/Mamba_ship_detection.mp4`](media/Mamba_ship_detection.mp4)
 
+The same video is bundled in the portable package. In the GUI's **About** tab it
+autoplays muted; viewers can enable audio from the standard player controls.
+
 ## Windows installation
 
 1. Extract the complete ZIP to a normal writable folder.

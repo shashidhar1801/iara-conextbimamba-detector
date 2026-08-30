@@ -1,0 +1,16 @@
+{
+  "status": "FINAL_VERIFIED",
+  "built_utc": "2026-08-30T12:05:01.697808+00:00",
+  "package_root": "deployment/windows_gui_v1/dist/ConExtBiMamba_GUI_v1.0.0",
+  "package_name": "ConExtBiMamba_GUI_v1.0.0",
+  "controlled_files": 30,
+  "manifest_sha256": "055597409f5b5cb4c7ce56db71b2a9a7642e9f95d770d7aaec37e133ee50ac65",
+  "zip_path": "deployment/windows_gui_v1/dist/ConExtBiMamba_GUI_v1.0.0_Windows.zip",
+  "zip_size_bytes": 29587448,
+  "zip_sha256": "5e9492060fa521ed9ed6869a393b8077fecfc9798fb6b881f65a92a0a211d435",
+  "zip_entries": 32,
+  "zip_crc_passed": true,
+  "duplicate_zip_paths": 0,
+  "checkpoint_sha256": "4b17c076a4121dfe3233a28214a81b4d0a1ee1b53209e2f668b960a6bc62b00a",
+  "source_commit": "28623c5e05bb5fac98d1a7fdb596baaef3a8a2b2"
+}

@@ -1,0 +1,40 @@
+{
+  "status": "PASS",
+  "task7_frozen_contract_checks": {
+    "passed": 10,
+    "failed": 0
+  },
+  "deployment_tests": {
+    "passed": 11,
+    "failed": 0,
+    "real_cuda_inference": true
+  },
+  "browser_qa": {
+    "initial_page_rendered": true,
+    "bundled_example_inference": true,
+    "benchmark_panel_rendered": true,
+    "about_current_sections_verified": true,
+    "removed_benchmark_caption_absent": true,
+    "removed_about_sections_absent": true,
+    "secondary_mode_switch": true,
+    "browser_console_warnings_or_errors": 0
+  },
+  "background_process_qa": {
+    "hidden_launch": true,
+    "initial_main_window_handle": 0,
+    "ready_main_window_handle": 0,
+    "localhost_only": true,
+    "health_status": 200,
+    "stop_utility_passed": true,
+    "state_removed_after_stop": true
+  },
+  "scientific_integrity": {
+    "checkpoint_sha256": "4b17c076a4121dfe3233a28214a81b4d0a1ee1b53209e2f668b960a6bc62b00a",
+    "checkpoint_changed": false,
+    "frontend_changed": false,
+    "segment_starts_changed": false,
+    "aggregation_changed": false,
+    "thresholds_changed": false,
+    "prior_evaluations_changed": false
+  }
+}

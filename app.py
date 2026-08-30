@@ -37,10 +37,52 @@ except Exception as exc:  # pragma: no cover - exercised only in incomplete rele
     segment_cmvn = None  # type: ignore[assignment]
     build_model = None  # type: ignore[assignment]
 
-APP_VERSION = "0.2.0"
+APP_VERSION = "1.0.0-windows-deploy"
 MAX_PUBLIC_DURATION_SEC = 30.0 * 60.0
 LARGE_FILE_MB_WARNING = 500.0
 EVENT_PROBABILITY_THRESHOLD = 0.5
+BENCHMARK_SAMPLE_RATE = 16000
+BENCHMARK_BAG_SECONDS = 121.0
+BENCHMARK_BAG_SAMPLES = 1_936_000
+FROZEN_SEGMENT_SECONDS = 20.0
+FROZEN_SEGMENT_SAMPLES = 320_000
+FROZEN_SEGMENT_STARTS = (162_666, 808_000, 1_453_333)
+FROZEN_CHECKPOINT = (
+    "revision_training/task3_matched_models/frozen_checkpoints/"
+    "matched_conextbimamba/seed_20260825/best_checkpoint.pt"
+)
+FROZEN_DATA_CONFIG: dict[str, Any] = {
+    "sample_rate": BENCHMARK_SAMPLE_RATE,
+    "segment_seconds": FROZEN_SEGMENT_SECONDS,
+    "feature_mode": "multi_resolution_logmel_cqt",
+    "n_fft": 2048,
+    "hop_length": 512,
+    "win_length": 2048,
+    "n_mels": 128,
+    "f_min": 10.0,
+    "f_max": 8000.0,
+    "multi_resolution": {
+        "mel_resolutions": [
+            {
+                "n_fft": 1024,
+                "win_length": 1024,
+                "hop_length": 512,
+                "n_mels": 64,
+                "f_min": 10.0,
+                "f_max": 8000.0,
+            }
+        ],
+        "cqt": {
+            "enabled": True,
+            "n_fft": 4096,
+            "win_length": 4096,
+            "hop_length": 512,
+            "n_bins": 84,
+            "f_min": 20.0,
+            "f_max": 8000.0,
+        },
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -55,63 +97,32 @@ class ModeSpec:
 
 
 MODES: dict[str, ModeSpec] = {
-    "ConExtBiMamba-Balanced": ModeSpec(
-        name="ConExtBiMamba-Balanced",
-        role="Primary GUI model",
-        checkpoint="runs/iara_conextbimamba_full_large_multires_20s/best.pt",
-        aggregation="top2_mean",
-        threshold=0.9298714101314545,
-        score_label="top-2 mean probability",
-        batch_size=4,
+    "ConExtBiMamba-Default": ModeSpec(
+        name="ConExtBiMamba-Default",
+        role="Frozen primary offline research mode",
+        checkpoint=FROZEN_CHECKPOINT,
+        aggregation="mean",
+        threshold=0.2287546408673127,
+        score_label="mean of three fixed segment probabilities",
+        batch_size=3,
     ),
     "ConExtBiMamba-Conservative": ModeSpec(
         name="ConExtBiMamba-Conservative",
-        role="Secondary low-false-alarm GUI mode",
-        checkpoint="runs/iara_conextbimamba_full_large_multires_20s/best.pt",
-        aggregation="noisy_or_evidence",
-        threshold=34.557258003291,
-        score_label="noisy-or evidence",
-        batch_size=4,
-    ),
-    "ConExtBiMamba mean (research)": ModeSpec(
-        name="ConExtBiMamba mean (research)",
-        role="Research mode",
-        checkpoint="runs/iara_conextbimamba_full_large_multires_20s/best.pt",
-        aggregation="mean",
-        threshold=0.49674045933144434,
-        score_label="mean segment probability",
-        batch_size=4,
-    ),
-    "ResNet baseline (research)": ModeSpec(
-        name="ResNet baseline (research)",
-        role="Research baseline",
-        checkpoint="runs/iara_resnet_full_fast/best.pt",
-        aggregation="mean",
-        threshold=0.5,
-        score_label="mean segment probability",
-        batch_size=16,
-    ),
-    "Conformer baseline (research)": ModeSpec(
-        name="Conformer baseline (research)",
-        role="Research baseline",
-        checkpoint="runs/iara_conformer_full_fast/best.pt",
-        aggregation="mean",
-        threshold=0.5,
-        score_label="mean segment probability",
-        batch_size=8,
+        role="Frozen secondary offline research mode; not proven operationally superior",
+        checkpoint=FROZEN_CHECKPOINT,
+        aggregation="mean_log_survival",
+        threshold=0.6510023052576646,
+        score_label="mean-log-survival score from three fixed segments",
+        batch_size=3,
     ),
 }
 
 PUBLIC_MODES = [
-    "ConExtBiMamba-Balanced",
+    "ConExtBiMamba-Default",
     "ConExtBiMamba-Conservative",
 ]
 
-ADVANCED_MODES = [
-    "ConExtBiMamba mean (research)",
-    "ResNet baseline (research)",
-    "Conformer baseline (research)",
-]
+ADVANCED_MODES: list[str] = []
 
 AUDIO_TYPES = ["wav", "flac", "aiff", "aif", "ogg", "mp3"]
 
@@ -258,13 +269,13 @@ def frontend_description(data_cfg: dict[str, Any]) -> str:
     n_mels = int(data_cfg.get("n_mels", 64))
     sample_rate = int(data_cfg.get("sample_rate", 16000))
     segment_seconds = float(data_cfg.get("segment_seconds", 10.0))
-    hop_seconds = float(data_cfg.get("hop_seconds", segment_seconds))
     if "multi" in feature_mode.lower():
         return (
-            f"{feature_mode}; {n_mels} Mel bins plus configured CQT branch; "
-            f"{sample_rate} Hz; {segment_seconds:g} s segments; {hop_seconds:g} s hop"
+            f"{feature_mode}; 128-bin Mel (FFT 2048), 64-bin Mel (FFT 1024), "
+            f"84-bin log-spaced/CQT-style branch (FFT 4096), hop 512; "
+            f"{sample_rate} Hz; {segment_seconds:g} s segments; segment CMVN"
         )
-    return f"{feature_mode}; {n_mels} Mel bins; {sample_rate} Hz; {segment_seconds:g} s segments; {hop_seconds:g} s hop"
+    return f"{feature_mode}; {n_mels} Mel bins; {sample_rate} Hz; {segment_seconds:g} s segments; segment CMVN"
 
 
 def inspect_audio_file(path: str | Path) -> dict[str, Any]:
@@ -295,6 +306,16 @@ def show_audio_warnings(meta: dict[str, Any]) -> None:
         st.info("Audio duration could not be inspected before inference. The detector will still try to decode the file.")
     duration = float(meta.get("duration_sec", 0.0) or 0.0)
     size_mb = float(meta.get("file_size_mb", 0.0) or 0.0)
+    if 0.0 < duration < BENCHMARK_BAG_SECONDS:
+        st.warning(
+            "This file is shorter than 121 seconds. It can be inspected, but its score and decision are explicitly "
+            "nonbenchmark diagnostics because the frozen three-position evidence bag cannot be reproduced."
+        )
+    elif duration >= BENCHMARK_BAG_SECONDS:
+        st.info(
+            "The detector will evaluate the first 121 seconds using the three frozen 20-second segment starts. "
+            "Audio beyond 121 seconds is not used in this recording-level decision."
+        )
     if duration > MAX_PUBLIC_DURATION_SEC:
         st.warning("This recording is longer than 30 minutes. For large files, offline batch processing is recommended.")
     if size_mb > LARGE_FILE_MB_WARNING:
@@ -365,8 +386,14 @@ def segments_with_report_metadata(result: dict[str, Any]) -> pd.DataFrame:
         "uncertainty_flag",
         "checkpoint_sha256",
         "config_hash",
+        "aggregation_config_hash",
         "segment_seconds",
-        "hop_seconds",
+        "benchmark_equivalent",
+        "evaluation_scope",
+        "source_duration_sec",
+        "evaluated_duration_sec",
+        "waveform_gain_normalization",
+        "segment_normalization",
         "device",
         "torch_version",
     ]:
@@ -415,8 +442,10 @@ def load_detector(mode_name: str):
         raise RuntimeError("Model builder is unavailable because the project modules did not import correctly.")
     spec = MODES[mode_name]
     checkpoint = PROJECT_ROOT / spec.checkpoint
-    ckpt = torch.load(checkpoint, map_location="cpu")
-    cfg = ckpt["config"]
+    # This repository-authored checkpoint contains numpy scalar metadata and is therefore
+    # loaded with weights_only=False. Its SHA-256 is exported with every result.
+    ckpt = torch.load(checkpoint, map_location="cpu", weights_only=False)
+    cfg = {"model": ckpt["model_config"], "data": FROZEN_DATA_CONFIG}
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = build_model(cfg["model"])
     model.load_state_dict(ckpt["model_state_dict"], strict=True)
@@ -436,33 +465,36 @@ def read_audio(path: str | Path, target_sr: int) -> torch.Tensor:
     wav = wav.mean(dim=0).float()
     if int(sr) != int(target_sr):
         wav = torchaudio.functional.resample(wav, orig_freq=int(sr), new_freq=int(target_sr))
-    wav = wav - wav.mean()
-    wav = wav / wav.abs().max().clamp_min(1e-6)
+    # Preserve physical amplitude relationships: the frozen evaluation used no gain
+    # normalization or waveform-level centering. Segment CMVN remains in the frontend.
     return wav.contiguous()
 
 
-def segment_starts(num_samples: int, sample_rate: int, segment_seconds: float, hop_seconds: float) -> list[int]:
-    seg_len = int(round(segment_seconds * sample_rate))
-    hop_len = int(round(hop_seconds * sample_rate))
-    if num_samples <= seg_len:
-        return [0]
-    starts = list(range(0, max(1, num_samples - seg_len + 1), max(1, hop_len)))
-    final = max(0, num_samples - seg_len)
-    starts.append(final)
-    return sorted(set(starts))
+def segment_plan(num_samples: int, sample_rate: int) -> tuple[list[int], bool, str]:
+    """Return the frozen K=3 plan or an explicitly nonbenchmark diagnostic plan."""
+    if sample_rate != BENCHMARK_SAMPLE_RATE:
+        raise ValueError(f"Segment planning requires {BENCHMARK_SAMPLE_RATE} Hz audio after resampling")
+    if num_samples >= BENCHMARK_BAG_SAMPLES:
+        return list(FROZEN_SEGMENT_STARTS), True, "frozen_121s_three_segment_contract"
+    max_start = max(0, num_samples - FROZEN_SEGMENT_SAMPLES)
+    if max_start == 0:
+        starts = [0]
+    else:
+        starts = sorted(set(int(round(x)) for x in np.linspace(0, max_start, num=3)))
+    return starts, False, "nonbenchmark_short_file_diagnostic"
 
 
 def aggregate_score(probabilities: np.ndarray, aggregation: str) -> float:
     probs = np.asarray(probabilities, dtype=np.float64)
     if probs.size == 0:
         return 0.0
-    if aggregation == "top2_mean":
-        k = min(2, probs.size)
-        return float(np.sort(probs)[-k:].mean())
-    if aggregation == "noisy_or_evidence":
-        clipped = np.clip(probs, 1e-8, 1.0 - 1e-8)
-        return float(np.sum(-np.log1p(-clipped)))
-    return float(probs.mean())
+    if np.any((probs < 0.0) | (probs > 1.0)):
+        raise ValueError("Segment probabilities must be in [0, 1]")
+    if aggregation == "mean":
+        return float(probs.mean())
+    if aggregation == "mean_log_survival":
+        return float(1.0 - np.exp(np.log(1.0 - probs + 1e-8).mean()))
+    raise ValueError(f"Unsupported frozen aggregation: {aggregation}")
 
 
 @torch.no_grad()
@@ -472,9 +504,11 @@ def run_detection(audio_path: str | Path, mode_name: str) -> dict[str, Any]:
     data_cfg = cfg["data"]
     sample_rate = int(data_cfg.get("sample_rate", 16000))
     segment_seconds = float(data_cfg.get("segment_seconds", 10.0))
-    hop_seconds = float(data_cfg.get("hop_seconds", segment_seconds))
     wav = read_audio(audio_path, sample_rate)
-    starts = segment_starts(wav.numel(), sample_rate, segment_seconds, hop_seconds)
+    source_num_samples = int(wav.numel())
+    starts, benchmark_equivalent, evaluation_scope = segment_plan(source_num_samples, sample_rate)
+    if benchmark_equivalent:
+        wav = wav[:BENCHMARK_BAG_SAMPLES]
     seg_len = int(round(segment_seconds * sample_rate))
 
     rows: list[dict[str, Any]] = []
@@ -539,13 +573,28 @@ def run_detection(audio_path: str | Path, mode_name: str) -> dict[str, Any]:
         "n_events": int(len(events)),
         "sample_rate": sample_rate,
         "segment_seconds": segment_seconds,
-        "hop_seconds": hop_seconds,
-        "duration_sec": float(wav.numel() / sample_rate),
+        "duration_sec": float(source_num_samples / sample_rate),
+        "source_duration_sec": float(source_num_samples / sample_rate),
+        "evaluated_duration_sec": float(wav.numel() / sample_rate),
+        "benchmark_equivalent": benchmark_equivalent,
+        "evaluation_scope": evaluation_scope,
+        "fixed_segment_start_samples": list(FROZEN_SEGMENT_STARTS) if benchmark_equivalent else starts,
+        "fixed_segment_start_seconds": [start / sample_rate for start in starts],
+        "waveform_gain_normalization": "none",
+        "segment_normalization": "per-segment CMVN after frozen frontend",
         "top_segment_start_sec": float(top_segment.get("start_sec", 0.0)),
         "top_segment_probability": float(top_segment.get("ship_probability", 0.0)),
         "checkpoint_path": spec.checkpoint,
         "checkpoint_sha256": sha256_file(str(checkpoint_path)),
         "config_hash": config_hash(cfg),
+        "aggregation_config_hash": config_hash(
+            {
+                "aggregation": spec.aggregation,
+                "threshold": spec.threshold,
+                "required_segment_starts": FROZEN_SEGMENT_STARTS,
+                "bag_samples": BENCHMARK_BAG_SAMPLES,
+            }
+        ),
         "frontend_description": frontend_description(data_cfg),
         "trainable_parameters": trainable_params,
         "device": str(device),
@@ -646,16 +695,6 @@ def spectrogram_figure(wav: np.ndarray, sample_rate: int) -> plt.Figure:
 def timeline_figure(segments: pd.DataFrame, spec: ModeSpec) -> plt.Figure:
     fig, ax = plt.subplots(figsize=(10.5, 3.0))
     ax.plot(segments["start_sec"], segments["ship_probability"], marker="o", ms=4, lw=1.4, color="#2563eb")
-    if spec.aggregation == "top2_mean" and len(segments) > 0:
-        top_idx = segments["ship_probability"].nlargest(min(2, len(segments))).index
-        ax.scatter(
-            segments.loc[top_idx, "start_sec"],
-            segments.loc[top_idx, "ship_probability"],
-            s=72,
-            color="#16a34a",
-            zorder=4,
-            label="top-2 segments",
-        )
     if spec.threshold <= 1.0:
         ax.axhline(spec.threshold, color="#dc2626", ls="--", lw=1.0, label="recording threshold")
     else:
@@ -712,9 +751,6 @@ def combined_png(result: dict[str, Any], mode_name: str) -> bytes:
 
     ax3 = fig.add_subplot(gs[2])
     ax3.plot(segments["start_sec"], segments["ship_probability"], marker="o", ms=3, lw=1.2, color="#2563eb")
-    if spec.aggregation == "top2_mean" and len(segments) > 0:
-        top_idx = segments["ship_probability"].nlargest(min(2, len(segments))).index
-        ax3.scatter(segments.loc[top_idx, "start_sec"], segments.loc[top_idx, "ship_probability"], s=55, color="#16a34a", zorder=4)
     if spec.threshold <= 1.0:
         ax3.axhline(spec.threshold, color="#dc2626", ls="--", lw=1.0)
     ax3.set_xlabel("Time (s)")
@@ -739,68 +775,22 @@ def combined_png(result: dict[str, Any], mode_name: str) -> bytes:
 
 @st.cache_data(show_spinner=False)
 def load_benchmark_table() -> pd.DataFrame:
-    rows: list[dict[str, Any]] = [
-        {
-            "Model": "IARA MLP",
-            "Role": "Published IARA baseline",
-            "Balanced accuracy": 0.6748,
-            "F1": 0.6672,
-            "False alarm rate": np.nan,
-            "Miss rate": np.nan,
-            "AUROC": np.nan,
-            "AUPRC": np.nan,
-        }
-    ]
-    metric_sources = [
-        ("ResNet", "CNN baseline", PROJECT_ROOT / "runs/iara_resnet_full_fast/eval_test/metrics.json"),
-        ("Conformer", "Attention baseline", PROJECT_ROOT / "runs/iara_conformer_full_fast/eval_test/metrics.json"),
-    ]
-    for name, role, path in metric_sources:
-        if path.exists():
-            m = json.loads(path.read_text())
-            rows.append(
-                {
-                    "Model": name,
-                    "Role": role,
-                    "Balanced accuracy": m.get("recording_balanced_accuracy"),
-                    "F1": m.get("recording_f1"),
-                    "False alarm rate": m.get("recording_false_alarm_rate"),
-                    "Miss rate": m.get("recording_miss_rate"),
-                    "AUROC": m.get("recording_auroc"),
-                    "AUPRC": m.get("recording_auprc"),
-                }
-            )
-    agg_path = PROJECT_ROOT / "runs/iara_conextbimamba_full_large_multires_20s/recording_aggregation_selected_summary.csv"
-    if agg_path.exists():
-        agg = pd.read_csv(agg_path)
-        label_map = {
-            "mean": "ConExtBiMamba",
-            "top2_mean": "ConExtBiMamba-Balanced",
-            "noisy_or_evidence": "ConExtBiMamba-Conservative",
-        }
-        role_map = {
-            "mean": "Research mean aggregation",
-            "top2_mean": "Primary GUI model",
-            "noisy_or_evidence": "Low-false-alarm GUI mode",
-        }
-        for method in ["mean", "top2_mean", "noisy_or_evidence"]:
-            row = agg[(agg["method"] == method) & (agg["operating_point"] == "val_best_ba")]
-            if row.empty:
-                continue
-            r = row.iloc[0]
-            rows.append(
-                {
-                    "Model": label_map[method],
-                    "Role": role_map[method],
-                    "Balanced accuracy": r["test_balanced_accuracy"],
-                    "F1": r["test_f1"],
-                    "False alarm rate": r["test_false_alarm_rate"],
-                    "Miss rate": r["test_miss_rate"],
-                    "AUROC": r["test_auroc"],
-                    "AUPRC": r["test_auprc"],
-                }
-            )
-    return pd.DataFrame(rows)
+    path = PROJECT_ROOT / "revision_manuscript/task7_final_revision/tables/Main_Table_2_Corrected_Matched_Benchmark.csv"
+    if not path.exists():
+        return pd.DataFrame()
+    source = pd.read_csv(path)
+    columns = {
+        "False-positive rate": "False alarm rate",
+        "Balanced accuracy": "Balanced accuracy",
+        "Miss rate": "Miss rate",
+        "F1": "F1",
+        "AUROC": "AUROC",
+        "AUPRC": "AUPRC",
+    }
+    result = pd.DataFrame({"Model": source["Model"], "Role": "Corrected matched benchmark; five-seed mean"})
+    for source_col, target_col in columns.items():
+        result[target_col] = source[source_col].astype(str).str.split().str[0].astype(float)
+    return result
 
 
 def benchmark_figure(df: pd.DataFrame) -> plt.Figure:
@@ -808,7 +798,7 @@ def benchmark_figure(df: pd.DataFrame) -> plt.Figure:
     colors = ["#64748b", "#2563eb", "#d97706", "#0891b2", "#16a34a", "#7c3aed"][: len(plot)]
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
     axes[0].bar(plot["Model"], plot["Balanced accuracy"], color=colors, edgecolor="#1e293b", linewidth=0.5)
-    axes[0].set_ylim(0.6, 1.0)
+    axes[0].set_ylim(0.8, 1.0)
     axes[0].set_ylabel("Balanced accuracy")
     axes[0].tick_params(axis="x", rotation=25)
     axes[0].set_title("Held-out IARA test split")
@@ -837,7 +827,8 @@ def decision_card(summary: dict[str, Any]) -> None:
             <div class="decision-meta">
                 {summary["mode"]} | {summary["score_label"]}: {summary["score"]:.4g} |
                 threshold: {summary["threshold"]:.4g} | decision: {decision_text} |
-                uncertainty: {summary.get("uncertainty_flag", "n/a")} | segments: {summary["n_segments"]}
+                uncertainty: {summary.get("uncertainty_flag", "n/a")} | segments: {summary["n_segments"]} |
+                scope: {summary.get("evaluation_scope", "unknown")}
             </div>
         </div>
         """,
@@ -882,6 +873,11 @@ def render_single_analysis(mode_name: str) -> None:
         st.warning("The displayed result was produced with a different mode. Run detection again for the selected mode.")
 
     summary = result["summary"]
+    if not summary.get("benchmark_equivalent", False):
+        st.error(
+            "NONBENCHMARK DIAGNOSTIC: this file does not reproduce the frozen 121-second, three-position evidence bag. "
+            "Do not compare this decision with manuscript performance estimates."
+        )
     decision_card(summary)
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Score", f"{summary['score']:.4g}")
@@ -895,7 +891,13 @@ def render_single_analysis(mode_name: str) -> None:
                 "checkpoint_path": summary["checkpoint_path"],
                 "checkpoint_sha256": summary["checkpoint_sha256"],
                 "config_hash": summary["config_hash"],
+                "aggregation_config_hash": summary["aggregation_config_hash"],
                 "frontend_description": summary["frontend_description"],
+                "benchmark_equivalent": summary["benchmark_equivalent"],
+                "evaluation_scope": summary["evaluation_scope"],
+                "fixed_segment_start_samples": summary["fixed_segment_start_samples"],
+                "waveform_gain_normalization": summary["waveform_gain_normalization"],
+                "segment_normalization": summary["segment_normalization"],
                 "device": summary["device"],
                 "torch_version": summary["torch_version"],
                 "trainable_parameters": summary["trainable_parameters"],
@@ -1026,6 +1028,12 @@ def render_batch(mode_name: str) -> None:
 
 def render_benchmark() -> None:
     df = load_benchmark_table()
+    if df.empty:
+        st.info(
+            "The corrected matched-benchmark summary is not present in this installation. "
+            "Audio inference remains available, but the comparison panel cannot be rendered."
+        )
+        return
     dataframe_table(
         df.style.format(
             {
@@ -1042,35 +1050,18 @@ def render_benchmark() -> None:
     )
     fig = benchmark_figure(df)
     st.pyplot(fig, clear_figure=True)
-    tuning_path = PROJECT_ROOT / "runs/iara_conextbimamba_full_large_multires_20s/recording_aggregation_selected_summary.csv"
-    if tuning_path.exists():
-        tuning = pd.read_csv(tuning_path)
-        st.subheader("Aggregation Operating Points")
-        dataframe_table(
-            tuning[
-                [
-                    "method",
-                    "operating_point",
-                    "threshold",
-                    "test_balanced_accuracy",
-                    "test_f1",
-                    "test_false_alarm_rate",
-                    "test_miss_rate",
-                ]
-            ],
-            hide_index=True,
-        )
 
 
 def render_about() -> None:
     st.warning(
-        "Research decision-support prototype only. Do not use this dashboard as the sole basis for safety-critical marine monitoring decisions."
+        "Offline research decision-support prototype only. It is not a real-time detector, safety system, vessel census, "
+        "or substitute for qualified human review."
     )
     st.subheader("Model")
     st.write(
-        "The dashboard wraps the large multi-resolution Underwater ConExtBiMamba Detector trained on the full IARA benchmark. "
-        "The public default is ConExtBiMamba-Balanced, which applies top-2 mean recording aggregation with the validation-selected threshold. "
-        "ConExtBiMamba-Conservative uses noisy-or evidence aggregation for lower false-alarm alert-style review."
+        "The dashboard wraps the frozen seed-20260825 ConExtBiMamba checkpoint from the corrected IARA experiment. "
+        "Default uses the arithmetic mean of exactly three fixed segment probabilities. Conservative uses the "
+        "validation-frozen mean-log-survival mode; it is an alternative operating mode, not an operational guarantee."
     )
     st.write(
         "Architecturally, the detector uses a Conformer-style acoustic encoder in which multi-head self-attention is replaced by "
@@ -1100,28 +1091,20 @@ def render_about() -> None:
     st.subheader("Input And Output")
     st.write(
         "WAV, FLAC, AIFF, OGG, and MP3 inputs are accepted when the local audio stack supports the codec. "
-        "Audio is converted to mono, resampled to the model sample rate, segmented using the checkpoint configuration, "
-        "and summarized at both recording and segment/event levels."
+        "Audio is converted to mono and resampled to 16 kHz without gain normalization. Benchmark-contract evaluation uses "
+        "a 121-second bag and exactly three 20-second segments starting at samples 162666, 808000, and 1453333. "
+        "Shorter files remain inspectable but are prominently labeled nonbenchmark diagnostics."
     )
-    st.subheader("Citation And License")
-    st.write(
-        "Dataset: IARA, an Acoustical Recordings Archive. Use the dataset citation and license supplied by the Zenodo/IARA release. "
-        "Do not redistribute IARA audio unless the dataset license permits it. "
-        "Classical baseline: IEEE Access IARA benchmark article, DOI 10.1109/ACCESS.2025.3585467 / IEEE document 11063279. "
-        "Architecture reference: Zhang et al., Mamba in Speech: Towards an Alternative to Self-Attention, IEEE/ACM TASLP, 2025."
-    )
-    st.subheader("Known Limitations")
-    st.write(
-        "Performance may vary across hydrophones, sites, vessel classes, weather, range, and background acoustic conditions. "
-        "Borderline recordings are marked for review, and human inspection remains important for operational use."
+    st.caption(
+        "Uploaded files are processed locally and cached under runs/gui_uploads in this installation. "
+        "Delete that folder when retained local copies are no longer needed."
     )
 
 
 def selected_mode_from_sidebar() -> str:
     with st.sidebar:
         st.header("Detector Mode")
-        show_advanced = st.checkbox("Show advanced research modes", value=False)
-        mode_options = PUBLIC_MODES + (ADVANCED_MODES if show_advanced else [])
+        mode_options = PUBLIC_MODES
         mode_name = st.selectbox("Model mode", mode_options, index=0)
         spec = MODES[mode_name]
         st.caption(spec.role)
@@ -1131,18 +1114,10 @@ def selected_mode_from_sidebar() -> str:
     return mode_name
 
 
-def render_release_disclaimer() -> None:
-    st.caption(
-        "Prototype research dashboard for passive underwater acoustic ship/background detection. "
-        "Outputs are decision-support evidence and should be reviewed by a qualified user before operational action."
-    )
-
-
 def main() -> None:
     st.set_page_config(page_title="Underwater ConExtBiMamba Detector", page_icon="~", layout="wide")
     apply_page_style()
     st.title("Underwater ConExtBiMamba Detector")
-    render_release_disclaimer()
     mode_name = selected_mode_from_sidebar()
     if not validate_mode_resources(mode_name):
         st.stop()

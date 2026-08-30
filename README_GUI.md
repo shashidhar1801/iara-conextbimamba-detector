@@ -1,137 +1,142 @@
-# Underwater ConExtBiMamba Streamlit GUI
+# ConExtBiMamba Windows GUI
 
-This dashboard is a research decision-support interface for passive underwater acoustic ship/background detection from audio recordings. It wraps the trained IARA benchmark models and provides single-file analysis, batch analysis, visualization, recording-level decisions, segment/event summaries, and reproducible exports.
+The Windows GUI is a local Streamlit dashboard for acoustic ship/background
+screening. It supports single-file inference, batch processing, waveform and
+spectrogram review, segment-level probabilities, recording-level decisions, and
+reproducible CSV, JSON, PNG, and ZIP exports.
 
-The GUI is not safety-certified and must not be used as the sole basis for operational marine monitoring decisions.
+The application binds to `127.0.0.1`; uploaded audio and inference results remain
+on the local computer unless the user exports or moves them.
 
-## Installation
+## Download
 
-Use Python 3.10 or newer. From this folder:
+Use the verified portable package:
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-streamlit run app.py --server.fileWatcherType none
-```
+[`deployment/windows_gui_v1/dist/ConExtBiMamba_GUI_v1.0.0_Windows.zip`](deployment/windows_gui_v1/dist/ConExtBiMamba_GUI_v1.0.0_Windows.zip)
 
-On Windows, activate the environment with `.venv\Scripts\activate`.
+The release also includes a walkthrough video:
 
-For larger local uploads, raise Streamlit's upload cap:
+[`media/Mamba_ship_detection.mp4`](media/Mamba_ship_detection.mp4)
 
-```bash
-streamlit run app.py --server.maxUploadSize 1024 --server.fileWatcherType none
-```
+## Windows installation
 
-## Public Release Smoke Test
+1. Extract the complete ZIP to a normal writable folder.
+2. Double-click `Install_GUI.vbs`. The installer selects the CUDA 13.0 runtime
+   when it detects a compatible NVIDIA GPU and otherwise uses the CPU runtime.
+3. If automatic GPU installation is unsuitable, use `Install_GUI_CPU.vbs`.
+4. Double-click `Launch_GUI.vbs` to start the hidden local server and open the
+   dashboard.
+5. Use `Verify_GUI.vbs` to check the package, checkpoint, imports, and frozen
+   inference contract.
+6. Use `Stop_GUI.vbs` to stop only this installation's recorded server process.
 
-Before publishing a release package, run the dashboard in a clean environment and test:
+No administrator rights are required. Installation and launch logs are written
+inside the extracted package rather than displayed in a console window.
 
-- One short WAV.
-- One long WAV.
-- One batch of WAV files.
-- `ConExtBiMamba-Balanced`.
-- `ConExtBiMamba-Conservative`.
-- Advanced research mode.
-- Missing checkpoint behavior.
-- Missing bundled example WAV behavior.
-- CSV, JSON, and PNG export.
-- Batch ZIP export.
+## Frozen model contract
 
-## Recommended Public Release Layout
+The package contains one representative matched ConExtBiMamba checkpoint:
 
-The GUI ZIP by itself is not standalone because the app expects the model source, configs, and checkpoints to exist beside it. For public release, package the dashboard with the full project structure:
+- Seed: `20260825`
+- Checkpoint SHA-256:
+  `4b17c076a4121dfe3233a28214a81b4d0a1ee1b53209e2f668b960a6bc62b00a`
+- Sample rate: 16 kHz
+- Benchmark bag length: 121 seconds
+- Segment length: 20 seconds
+- Fixed segment starts: samples `162666`, `808000`, and `1453333`
+- Waveform gain normalization: none
+- Frontend normalization: per-segment CMVN after the frozen frontend
 
-```text
-project_root/
-  app.py
-  README_GUI.md
-  requirements.txt
-  LICENSE
-  CITATION.cff
-  MODEL_CARD.md
-  iara_conextbimamba/
-  configs/
-  runs/
-    iara_conextbimamba_full_large_multires_20s/best.pt
-    iara_resnet_full_fast/best.pt        optional research baseline
-    iara_conformer_full_fast/best.pt     optional research baseline
-  examples/
-    wavs/                                small bundled demo WAV files
-  docs/
-    Supplementary_Figure_S9_GUI_Dashboard.tiff
-```
+The GUI accepts shorter recordings as nonbenchmark diagnostics, but a
+benchmark-equivalent decision requires at least 121 seconds of audio.
 
-Do not include local upload caches, virtual environments, Python bytecode caches, or the full IARA audio archive in a public release. The full dataset is already public at https://doi.org/10.5281/zenodo.15758636.
+## Operating modes
 
-## Required Files
+| Mode | Aggregation | Threshold | Role |
+|---|---|---:|---|
+| `ConExtBiMamba-Default` | Arithmetic mean | `0.2287546408673127` | Frozen primary offline research mode |
+| `ConExtBiMamba-Conservative` | Mean log survival | `0.6510023052576646` | Frozen secondary mode; not an operational guarantee |
 
-The GUI expects this app to live beside the trained project files:
+Both modes use the same checkpoint, frontend, and fixed evidence windows. Their
+thresholds were frozen before the external Taitung and Lake Balaton evaluations.
 
-- `app.py`: Streamlit application.
-- `iara_conextbimamba/`: model and feature-extraction source code.
-- `runs/iara_conextbimamba_full_large_multires_20s/best.pt`: trained ConExtBiMamba checkpoint.
-- `runs/iara_resnet_full_fast/best.pt`: optional ResNet research baseline checkpoint.
-- `runs/iara_conformer_full_fast/best.pt`: optional Conformer research baseline checkpoint.
-- `runs/*/eval_test/metrics.json`: optional benchmark metrics for the comparison tab.
-- `examples/wavs/`: small bundled WAV files for dashboard testing.
-- `data/iara_full/`: optional local full IARA audio folder. The GUI uses this only when present locally.
-- `LICENSE`, `CITATION.cff`, and `MODEL_CARD.md`: public-release metadata.
-- `docs/Supplementary_Figure_S9_GUI_Dashboard.tiff`: manuscript-ready GUI screenshot.
+## Accepted inputs
 
-If a selected checkpoint is missing, the dashboard shows a friendly validation message before inference.
+- WAV, FLAC, AIFF/AIF, OGG, and MP3 when the local audio stack supports the
+  codec
+- Mono or multichannel audio; channels are averaged to mono
+- Any input sample rate; audio is resampled to 16 kHz
+- Single files or local batches
 
-## Model Modes
-
-- `ConExtBiMamba-Balanced`: primary public mode. Uses top-2 mean aggregation with threshold `0.9298714101`.
-- `ConExtBiMamba-Conservative`: secondary public mode for low false-alarm review. Uses noisy-or evidence aggregation with threshold `34.5572580033`.
-- `ConExtBiMamba mean (research)`: research/reference mean aggregation for the proposed detector.
-- `ResNet baseline (research)`: spectrogram CNN baseline.
-- `Conformer baseline (research)`: MHSA Conformer baseline.
-
-Only Balanced and Conservative are shown by default. Research modes are available from the advanced sidebar toggle.
-
-## Input Requirements
-
-- WAV and FLAC are recommended. AIFF, OGG, and MP3 may work when supported by the local audio stack.
-- Mono or stereo inputs are accepted; channels are averaged to mono.
-- Audio is resampled to the checkpoint sample rate, typically 16 kHz.
-- The final ConExtBiMamba GUI model uses the checkpoint segmentation settings, typically 20 s segments with the stored hop size.
-- Very long files are allowed locally, but files longer than 30 minutes or larger than 500 MB trigger warnings.
+For a benchmark-equivalent 121-second recording, the GUI evaluates exactly the
+three frozen segments. Longer inputs are limited to the first 121 seconds under
+that contract. Shorter inputs are explicitly marked as diagnostic.
 
 ## Outputs
 
-The `Analyze WAV` tab provides:
+Single-file analysis provides:
 
-- Recording decision card with score, threshold, prediction, uncertainty flag, and segment count.
-- Waveform plot.
-- Spectrogram plot.
-- Segment probability timeline.
-- Segment-level CSV export with model, threshold, checkpoint hash, config hash, device, and torch metadata.
-- JSON export containing summary, events, and segment records.
-- PNG export of the analysis figure.
+- recording score, threshold, prediction, and uncertainty flag;
+- waveform and spectrogram views;
+- segment-probability timeline;
+- event summary table;
+- segment CSV;
+- decision JSON; and
+- analysis PNG.
 
-The `Batch Processing` tab provides:
+Batch analysis provides:
 
-- Per-file status and error columns.
-- Summary counts for completed, failed, and review-recommended files.
-- Batch CSV and JSON exports.
-- ZIP export containing batch summaries, segment CSV files, and event CSV files.
+- one recording-level row per input;
+- per-file status and error information;
+- batch CSV and JSON; and
+- a ZIP containing summaries, segment tables, and event tables.
 
-## Event And Uncertainty Logic
+Exports include the selected mode, aggregation method, threshold, checkpoint
+path and SHA-256, configuration hashes, device, frontend description, and
+PyTorch version.
 
-Recordings near the operating threshold are marked with `review` in the `uncertainty_flag` field. Consecutive segments with ship probability at or above `0.5` are merged into acoustic events with start time, end time, duration, segment count, max probability, and mean probability.
+## Package integrity
 
-## Known Limitations
+The extracted package contains:
 
-This is a research prototype. Performance can change across hydrophones, sites, vessel types, propagation conditions, sea state, biological noise, and recording hardware. Human review remains important, especially for borderline outputs or unfamiliar deployment environments.
+- `MANIFEST_SHA256.csv`, listing every controlled file and checksum;
+- `MANIFEST_SHA256.csv.sha256`, authenticating the manifest;
+- `models/checkpoint.sha256`, authenticating the frozen checkpoint; and
+- `scripts/verify_deployment.py`, used by `Verify_GUI.vbs`.
 
-## Citation
+The Windows deployment test suite checks required files, checkpoint identity,
+absence of datasets and caches, package-manifest integrity, hidden launch/stop
+behavior, real inference, ZIP contents, duplicate paths, and CRC integrity.
 
-Cite the IARA dataset according to the Zenodo/IARA release. Cite the IARA benchmark article for the published MLP/RF/CNN baseline context. For the architecture rationale, cite:
+## Repository development
 
-Zhang et al., "Mamba in Speech: Towards an Alternative to Self-Attention," IEEE/ACM Transactions on Audio, Speech, and Language Processing, 2025.
+The repository root contains the editable Streamlit source in `app.py`, the
+model implementation in `iara_conextbimamba/`, and the reproducible package
+builder in `deployment/windows_gui_v1/build_windows_gui.py`.
 
-## License And Data Policy
+To run the development app from a configured checkout:
 
-Do not redistribute IARA audio unless the dataset license permits it. Keep large checkpoints and audio outside public repositories when licensing, file size, or privacy constraints require it.
+```bash
+python -m venv .venv
+pip install -r requirements.txt
+streamlit run app.py --server.address 127.0.0.1 --server.fileWatcherType none
+```
+
+The development app expects the frozen checkpoint at the repository path encoded
+in `app.py`. Users who only need inference should use the portable Windows ZIP,
+which contains the checkpoint at a short internal path.
+
+## Data and use boundaries
+
+The package does not contain the full IARA dataset, Taitung data, Lake Balaton
+data, training caches, private virtual environments, or sealed-evaluation
+predictions. Obtain IARA from its official archive and follow the applicable
+dataset terms.
+
+This software is an offline research interface, not a safety-certified
+navigation or collision-avoidance system. Predictions should be interpreted by
+qualified users in the context of the recording environment and the complete
+evaluation evidence.
+
+See `LICENSE`, `MODEL_CARD.md`, and `CITATION.cff` for the software license,
+model scope, and citation metadata.

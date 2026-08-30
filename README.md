@@ -23,6 +23,24 @@ files are included under `examples/wavs/` for GUI smoke testing.
 The manuscript-ready GUI screenshot is also available as a TIFF file at
 `docs/Supplementary_Figure_S9_GUI_Dashboard.tiff`.
 
+### Windows GUI and walkthrough
+
+The verified Windows package is available at
+[`deployment/windows_gui_v1/dist/ConExtBiMamba_GUI_v1.0.0_Windows.zip`](deployment/windows_gui_v1/dist/ConExtBiMamba_GUI_v1.0.0_Windows.zip).
+Extract the ZIP and follow its `README_DEPLOYMENT.md`; the included VBS launchers
+install, start, verify, and stop the localhost-only dashboard without opening a
+console window.
+
+Watch the interface walkthrough:
+[`media/Mamba_ship_detection.mp4`](media/Mamba_ship_detection.mp4).
+
+The packaged default mode uses arithmetic-mean aggregation with threshold
+`0.2287546408673127`. The secondary conservative mode uses mean-log-survival
+aggregation with threshold `0.6510023052576646`. Both modes use the same frozen
+seed-20260825 checkpoint and the same three fixed 20-second evidence windows.
+See [README_GUI.md](README_GUI.md) for installation, integrity, and input-contract
+details.
+
 ## Architecture
 
 ```text

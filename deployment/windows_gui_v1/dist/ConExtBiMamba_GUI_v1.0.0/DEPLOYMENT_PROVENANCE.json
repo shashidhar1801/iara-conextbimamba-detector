@@ -1,0 +1,44 @@
+{
+  "deployment": "ConExtBiMamba Windows GUI",
+  "deployment_version": "1.0.0",
+  "built_utc": "2026-08-30T12:05:01.697808+00:00",
+  "source_branch": "deployment/windows-gui-v1",
+  "source_commit": "28623c5e05bb5fac98d1a7fdb596baaef3a8a2b2",
+  "app_sha256": "691ba395cccaecfd008184cbd6c356e1f9d1fce16f309520fa875db9f858ea40",
+  "source_checkpoint_relative_path": "revision_training/task3_matched_models/frozen_checkpoints/matched_conextbimamba/seed_20260825/best_checkpoint.pt",
+  "checkpoint_relative_path": "models/matched_conextbimamba_seed_20260825.pt",
+  "checkpoint_sha256": "4b17c076a4121dfe3233a28214a81b4d0a1ee1b53209e2f668b960a6bc62b00a",
+  "representative_seed": 20260825,
+  "validated_runtime": {
+    "python": "3.12.10",
+    "torch": "2.12.1+cu130",
+    "torchaudio": "2.11.0+cu130",
+    "streamlit": "1.58.0",
+    "cuda": "13.0"
+  },
+  "scientific_contract": {
+    "sample_rate": 16000,
+    "bag_samples": 1936000,
+    "segment_samples": 320000,
+    "fixed_segment_starts": [
+      162666,
+      808000,
+      1453333
+    ],
+    "default_aggregation": "mean",
+    "default_threshold": 0.2287546408673127,
+    "waveform_gain_normalization": "none"
+  },
+  "scope": "offline local research decision-support",
+  "limitations": [
+    "not safety certified",
+    "not an AIS-verified vessel detector",
+    "not an operational monitoring-hour false-alarm evaluation",
+    "Lake Balaton specificity was 0.0 on five frozen background bags at every seed",
+    "qualified human review is mandatory"
+  ],
+  "official_runtime_sources": {
+    "pytorch_previous_versions": "https://pytorch.org/get-started/previous-versions/",
+    "torchaudio_installation": "https://docs.pytorch.org/audio/main/installation.html"
+  }
+}
